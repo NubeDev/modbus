@@ -1,4 +1,4 @@
-package modbusone_test
+package modbus_test
 
 import (
 	"fmt"

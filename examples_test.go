@@ -1,7 +1,7 @@
 //go:generate embedmd -w README.md
 //go:generate sed -i -e 's/\t/\ \ \ \ /g' README.md
 
-package modbusone_test
+package modbus_test
 
 import (
 	"fmt"

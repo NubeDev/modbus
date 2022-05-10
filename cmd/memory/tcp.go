@@ -15,13 +15,13 @@ var _ = time.Second
 var fillData = flag.String("d", "am3", "data to start with, am3 starts memory "+
 	"with bools as address (mod 3) == 0, and registers as address * 3 (mod uint16)")
 
-var writeSizeLimit = flag.Int("wsl", modbusone.MaxRTUSize, "client only, the max size in bytes of a write to server to send")
-var readSizeLimit = flag.Int("rsl", modbusone.MaxRTUSize, "client only, the max size in bytes of a read from server to request")
+var writeSizeLimit = flag.Int("wsl", modbus.MaxRTUSize, "client only, the max size in bytes of a write to server to send")
+var readSizeLimit = flag.Int("rsl", modbus.MaxRTUSize, "client only, the max size in bytes of a read from server to request")
 
 var verbose = flag.Bool("v", false, "prints debugging information")
 
-func handlerGenerator(name string) modbusone.ProtocolHandler {
-	return &modbusone.SimpleHandler{
+func handlerGenerator(name string) modbus.ProtocolHandler {
+	return &modbus.SimpleHandler{
 		ReadHoldingRegisters: func(address, quantity uint16) ([]uint16, error) {
 			fmt.Printf("%v ReadHoldingRegisters from %v, quantity %v\n",
 				name, address, quantity)
@@ -35,7 +35,7 @@ func handlerGenerator(name string) modbusone.ProtocolHandler {
 			// application code here
 			return nil
 		},
-		OnErrorImp: func(req modbusone.PDU, errRep modbusone.PDU) {
+		OnErrorImp: func(req modbus.PDU, errRep modbus.PDU) {
 			fmt.Printf("%v received error:%x in request:%x", name, errRep, req)
 		},
 	}
@@ -44,7 +44,7 @@ func handlerGenerator(name string) modbusone.ProtocolHandler {
 func main() {
 	flag.Parse()
 	if *verbose {
-		modbusone.SetDebugOut(os.Stdout)
+		modbus.SetDebugOut(os.Stdout)
 	}
 
 	// TCP address of the host
@@ -53,14 +53,14 @@ func main() {
 	// Default server id
 	//id := byte(1)
 
-	// Open server tcp listner:
+	// Open server tcp listener:
 	listener, err := net.Listen("tcp", host)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	com := modbusone.NewTCPServer(listener)
+	com := modbus.NewTCPServer(listener)
 
 	defer func() {
 		com.Close()
@@ -77,9 +77,9 @@ func main() {
 	if *fillData == "am3" {
 		fillAm3()
 	}
-	var device modbusone.Server
+	var device modbus.Server
 	device = com
-	h := modbusone.SimpleHandler{
+	h := modbus.SimpleHandler{
 		ReadDiscreteInputs: func(address, quantity uint16) ([]bool, error) {
 			fmt.Printf("ReadDiscreteInputs from %v, quantity %v\n", address, quantity)
 			return discretes[address : address+quantity], nil
@@ -129,7 +129,7 @@ func main() {
 			return nil
 		},
 
-		OnErrorImp: func(req modbusone.PDU, errRep modbusone.PDU) {
+		OnErrorImp: func(req modbus.PDU, errRep modbus.PDU) {
 			fmt.Printf("error received: %v from req: %v\n", errRep, req)
 		},
 	}

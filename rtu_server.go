@@ -1,4 +1,4 @@
-package modbusone
+package modbus
 
 import (
 	"encoding/hex"
