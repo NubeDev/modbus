@@ -13,7 +13,7 @@ import (
 	"github.com/fatih/color"
 )
 
-func runClient(c *modbusone.RTUClient) {
+func runClient(c *modbus.RTUClient) {
 	//make these messages stand out with color
 	println := color.New(color.FgYellow).PrintlnFunc()
 	println(`Send requests by function code, address, and quantity.` +
@@ -39,13 +39,13 @@ func runClient(c *modbusone.RTUClient) {
 			limit = fc.MaxPerPacketSized((*readSizeLimit) - 3)
 		}
 		println("limit", limit)
-		reqs, err := modbusone.MakePDURequestHeadersSized(fc, a, q, limit, nil)
+		reqs, err := modbus.MakePDURequestHeadersSized(fc, a, q, limit, nil)
 		if err != nil {
 			println(err)
 			continue
 		}
 		println("doing ", fc, a, q, "in", len(reqs), "requests")
-		n, err := modbusone.DoTransactions(c, c.SlaveID, reqs)
+		n, err := modbus.DoTransactions(c, c.SlaveID, reqs)
 		if err != nil {
 			println(err, "in request", n+1, "/", len(reqs), reqs[n])
 			continue
@@ -54,7 +54,7 @@ func runClient(c *modbusone.RTUClient) {
 	}
 }
 
-func parseRequest(ts []string) (fc modbusone.FunctionCode, address, quantity uint16, err error) {
+func parseRequest(ts []string) (fc modbus.FunctionCode, address, quantity uint16, err error) {
 	quantity = 1 //default value
 	var n uint64
 
@@ -67,7 +67,7 @@ func parseRequest(ts []string) (fc modbusone.FunctionCode, address, quantity uin
 		err = fmt.Errorf("function code %v parse error: %v", ts[0], err)
 		return
 	}
-	fc = modbusone.FunctionCode(n)
+	fc = modbus.FunctionCode(n)
 	if !fc.Valid() {
 		err = fmt.Errorf("function code %v is not supported", fc)
 		return

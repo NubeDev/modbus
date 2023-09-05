@@ -25,15 +25,15 @@ var slaveID = flag.Uint64("id", 1, "the slaveId of the server for serial communi
 var fillData = flag.String("d", "am3", "data to start with, am3 starts memory "+
 	"with bools as address (mod 3) == 0, and registers as address * 3 (mod uint16)")
 
-var writeSizeLimit = flag.Int("wsl", modbusone.MaxRTUSize, "client only, the max size in bytes of a write to server to send")
-var readSizeLimit = flag.Int("rsl", modbusone.MaxRTUSize, "client only, the max size in bytes of a read from server to request")
+var writeSizeLimit = flag.Int("wsl", modbus.MaxRTUSize, "client only, the max size in bytes of a write to server to send")
+var readSizeLimit = flag.Int("rsl", modbus.MaxRTUSize, "client only, the max size in bytes of a read from server to request")
 
 var verbose = flag.Bool("v", false, "prints debugging information")
 
 func main() {
 	flag.Parse()
 	if *verbose {
-		modbusone.SetDebugOut(os.Stdout)
+		modbus.SetDebugOut(os.Stdout)
 	}
 	config := serial.Config{
 		Name:     *address,
@@ -48,7 +48,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "open serial error: %v\n", err)
 		os.Exit(1)
 	}
-	com := modbusone.NewSerialContext(s, int64(*baudRate))
+	com := modbus.NewSerialContext(s, int64(*baudRate))
 	defer func() {
 		fmt.Printf("%+v\n", com.Stats())
 		com.Close()
@@ -63,7 +63,7 @@ func main() {
 		os.Exit(0)
 	}()
 
-	id, err := modbusone.Uint64ToSlaveID(*slaveID)
+	id, err := modbus.Uint64ToSlaveID(*slaveID)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "set slaveID error: %v\n", err)
 		os.Exit(1)
@@ -71,19 +71,19 @@ func main() {
 	if *fillData == "am3" {
 		fillAm3()
 	}
-	var device modbusone.Server
+	var device modbus.Server
 	if *isClient {
-		if *writeSizeLimit > modbusone.MaxRTUSize || *readSizeLimit > modbusone.MaxRTUSize {
+		if *writeSizeLimit > modbus.MaxRTUSize || *readSizeLimit > modbus.MaxRTUSize {
 			fmt.Fprintf(os.Stderr, "write/read size limit is too big")
 			os.Exit(1)
 		}
-		client := modbusone.NewRTUClient(com, id)
+		client := modbus.NewRTUClient(com, id)
 		//go runClient(client)
 		device = client
 	} else {
-		device = modbusone.NewRTUServer(com, id)
+		device = modbus.NewRTUServer(com, id)
 	}
-	h := modbusone.SimpleHandler{
+	h := modbus.SimpleHandler{
 		ReadDiscreteInputs: func(address, quantity uint16) ([]bool, error) {
 			fmt.Printf("ReadDiscreteInputs from %v, quantity %v\n", address, quantity)
 			return discretes[address : address+quantity], nil
@@ -133,7 +133,7 @@ func main() {
 			return nil
 		},
 
-		OnErrorImp: func(req modbusone.PDU, errRep modbusone.PDU) {
+		OnErrorImp: func(req modbus.PDU, errRep modbus.PDU) {
 			fmt.Printf("error received: %v from req: %v\n", errRep, req)
 		},
 	}
